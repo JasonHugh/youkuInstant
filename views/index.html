@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset='utf-8'>
+	<title>优酷搜索</title>
+	<link rel="stylesheet" href="http://apps.bdimg.com/libs/bootstrap/3.2.0/css/bootstrap.min.css">
+	<style type="text/css">
+	body,a{font-family: '微软雅黑'}
+	.videoBox{margin:20px}
+	.videoBox .col-sm-3{margin-top:10px;height:210px;}
+	.videoBox .col-sm-3 img{width:100%;height:160px;}
+	.videoBox .col-sm-3 .title{margin:10px;color:#000;height:40px;overflow: hidden;}
+	.videoBox .col-sm-3 .time{position:absolute;right:20px;top:140px;color:#fff;font-weight: bold}
+	.page{text-align:center;margin-bottom:20px;}
+	.page li{cursor:pointer;list-style: none;float:left;display:block;width:40px;height:40px;border:1px solid #aaa;margin-left:10px;font-size:16px;line-height:40px;}
+	.page li:hover{background-color: #0af;color: #fff}
+	.page .notnum{width:80px;}
+	.active{background-color: #0af;color: #fff}
+	</style>
+</head>
+<body>
+
+<div class='container-fluid' ng-app="youku" ng-controller='search'>
+	<h1 style="text-align:center;margin-bottom:20px">优酷搜索</h1>
+ 	<div class="row">
+ 		<div class="col-lg-6 col-lg-offset-2"><input type="text" ng-change='search()' ng-model="searchContent" class="form-control" placeholder='请输入搜索内容'></div>
+ 		<div class="col-lg-4">
+ 			<button class='btn btn-primary' ng-click='search()'><span class='glyphicon glyphicon-search'></span>搜索</button>
+ 		</div>
+ 	</div>
+	<div class="row videoBox">
+		<div class="col-sm-3" ng-repeat='v in videos'><a ng-href='{{v.a}}' target="_blank"><img ng-src="{{v.img}}" alt=""><div class='time'>{{v.time}}</div><div class='title'>{{v.title}}</div></a></div>
+	</div>
+	<div class="row page" ng-show='isShowPage()'>
+		<ul>
+			<li class='notnum' ng-show='prev' ng-click='search($event)' value='{{now - 1}}'>上一页</li>
+			<li ng-repeat='p in pages' ng-class='isActive({{p}})' ng-click='search($event)' value='{{p}}'>{{p}}</li>
+			<li class='notnum' ng-show='next' ng-click='search($event)' value='{{now + 1}}'>下一页</li>
+		</ul>
+	</div>
+</div>
+
+<script src="http://apps.bdimg.com/libs/angular.js/1.3.9/angular.min.js"></script>
+<script type="text/javascript">
+	var app = angular.module('youku',[])
+	app.controller('search',function($scope,$http){
+		$scope.searchContent = ''
+		$scope.pages = []
+		$scope.search = function($event){
+			if($scope.searchContent != ''){
+				if($event == null){
+					page = 1;
+				}else{
+					page = $event.target.value
+				}
+				$http.get('/search?searchContent='+$scope.searchContent+'&page='+page).success(function(data){
+					$scope.videos = data.videos
+					$scope.pages = data.pages
+					$scope.now = parseInt(data.now)
+					$scope.prev = data.prev
+					$scope.next = data.next
+					$scope.pages[$scope.pages.length] = data.now
+					$scope.pages.sort(function(a,b){
+						return (parseInt(a) < parseInt(b)) ? -1 : 1;
+					})
+					//alert($scope.pages)
+				})
+			}
+		}
+		$scope.isShowPage = function(){
+			if($scope.pages.length <= 1){
+				return false;
+			}else{
+				return true;
+			}
+		}
+		$scope.isActive = function(num){
+			if(num == $scope.now){
+				return 'active'
+			}else{
+				return ''
+			}
+		}
+	})
+</script>
+
+</body>
+</html>
